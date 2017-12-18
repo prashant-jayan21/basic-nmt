@@ -1,0 +1,4 @@
+*.vec filter=lfs diff=lfs merge=lfs -text
+*.en filter=lfs diff=lfs merge=lfs -text
+*.hi filter=lfs diff=lfs merge=lfs -text
+*.txt filter=lfs diff=lfs merge=lfs -text
