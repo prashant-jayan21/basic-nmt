@@ -1,6 +1,20 @@
 import numpy as np
 import tensorflow as tf
 import operator
+from bleu import compute_bleu
+
+def my_slice(alist):
+    last_index = index_without_exception(alist, 'tgt_eos_id') # find index
+    if last_index == -1:
+        return alist
+    else:
+        return alist[:last_index]
+
+def get_scores(sentences_hi_test, test_results):
+    reference_corpus = list(map(lambda x: [x.lower().split(" ")], sentences_hi_test))
+    translation_corpus = list(map(my_slice, test_results))
+
+    return compute_bleu(reference_corpus, translation_corpus)
 
 def loadVocabAndEmbeddings(filename):
     vocab = []
@@ -124,12 +138,25 @@ def append_with_sos(indexed_tokens_list, tgt_sos_id):
 def append_with_eos(indexed_tokens_list, tgt_eos_id):
     return indexed_tokens_list + [tgt_eos_id]
 
-# def loadParallelCorpus(filename_en, filename_hi, num_sentences):
-#     with open(filename_en,'r') as myfile:
-#         sentences_en = [next(myfile).rstrip() for x in range(num_sentences)]
-#     with open(filename_hi,'r') as myfile:
-#         sentences_hi = [next(myfile).rstrip() for x in range(num_sentences)]
-#     return sentences_en, sentences_hi
+def loadTestCorpus(filename_en, filename_hi, num_sentences, min_length_en, max_length_en):
+    # FIXME: get rid of the num_sentences requirement
+    with open(filename_en,'r') as myfile:
+        sentences_en = [next(myfile).rstrip() for x in range(num_sentences)]
+    with open(filename_hi,'r') as myfile:
+        sentences_hi = [next(myfile).rstrip() for x in range(num_sentences)]
+
+    sentence_pairs = zip(sentences_en, sentences_hi)
+    sentences_en_final = []
+    sentences_hi_final = []
+    for pair in sentence_pairs:
+        sentence_en = pair[0]
+        sentence_hi = pair[1]
+        tokens_en = sentence_en.split(" ")
+        if len(tokens_en) >= min_length_en and len(tokens_en) <= max_length_en:
+            sentences_en_final.append(sentence_en)
+            sentences_hi_final.append(sentence_hi)
+
+    return sentences_en_final, sentences_hi_final
 
 def loadParallelCorpus(filename_en, filename_hi, num_sentences, min_length_en, max_length_en):
     file_en = open(filename_en,'r')
